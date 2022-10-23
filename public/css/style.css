@@ -1,0 +1,167 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: monospace;
+}
+
+h1,
+h2 {
+  text-align: center;
+}
+
+#cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(8px, 1vw, 1vw);
+  margin-top: 2rem;
+  min-height: clamp(var(--card-height, 80px), 10vw, 143vw);
+}
+#cards .card.playing {
+  z-index: 1;
+  -webkit-animation: spincard 1s linear infinite;
+          animation: spincard 1s linear infinite;
+}
+#cards .card:not(.playing):hover {
+  transform: scale(1.15);
+  opacity: 1;
+  z-index: 1;
+}
+@media screen and (max-width: 768px) {
+  #cards .card:not(.playing):hover {
+    transform: scale(1.5);
+  }
+}
+
+.card {
+  overflow: hidden;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(1rem, 1.5vw, 1.5vw);
+  height: -webkit-max-content;
+  height: -moz-max-content;
+  height: max-content;
+  cursor: pointer;
+  border: 1px solid var(--card-color);
+  color: var(--card-color);
+  opacity: 0.8;
+  background-color: #fff;
+  border-radius: 8px;
+  transform: scale(1) rotate(0deg);
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+.card [value] {
+  font-size: clamp(32px, 4vw, 4vw);
+  line-height: 1;
+  display: flex;
+}
+.card [value] span:not(:only-child) {
+  font-size: clamp(20px, 2.5vw, 2.5vw);
+  line-height: 1.6;
+  transform: scaleY(1.6);
+}
+.card [suit] {
+  font-size: clamp(24px, 3vw, 3vw);
+}
+
+#playground {
+  height: clamp(248px, 30vw, 30vw);
+  width: clamp(168px, 21vw, 21vw);
+  background-color: #ffffff;
+  border: 1px solid;
+  border-color: #ffffff;
+  border-radius: 16px;
+  margin: 4rem auto;
+  position: relative;
+  padding: clamp(16px, 2rem, 2rem);
+  position: relative;
+  --size: clamp(72px, 9vw, 9vw);
+}
+#playground::after {
+  content: "";
+  border: 16px solid #f6f6f6;
+  border-top: 16px solid #d9d9d9;
+  border-radius: 50%;
+  width: var(--size);
+  height: var(--size);
+  -webkit-animation: spin 2s linear infinite;
+          animation: spin 2s linear infinite;
+  display: inline-block;
+  position: absolute;
+  top: calc(50% - var(--size) / 2);
+  left: calc(50% - var(--size) / 2);
+}
+#playground.appear {
+  background-color: #dfdfdf;
+  border-color: #000000;
+}
+#playground.appear::after {
+  opacity: 0;
+}
+#playground .card-holder {
+  min-height: 20px;
+  min-width: 20px;
+  position: absolute;
+}
+#playground .card-holder .card:not(:last-child) {
+  display: none;
+}
+#playground .card-holder:nth-child(1) {
+  top: clamp(16px, 2rem, 2rem);
+  left: 50%;
+  transform: translateX(-50%);
+}
+#playground .card-holder:nth-child(2) {
+  right: clamp(16px, 2rem, 2rem);
+  top: 50%;
+  transform: translateY(-50%);
+}
+#playground .card-holder:nth-child(3) {
+  bottom: clamp(16px, 2rem, 2rem);
+  left: 50%;
+  transform: translateX(-50%);
+}
+#playground .card-holder:nth-child(4) {
+  left: clamp(16px, 2rem, 2rem);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@-webkit-keyframes spincard {
+  0% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: translateX(var(--playing-x)) translateY(var(--playing-y)) rotate(360deg);
+  }
+}
+
+@keyframes spincard {
+  0% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: translateX(var(--playing-x)) translateY(var(--playing-y)) rotate(360deg);
+  }
+}
+@-webkit-keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
