@@ -132,6 +132,13 @@ h2 {
   transform: translateY(-50%);
 }
 
+#message {
+  font-size: 2.5vw;
+  text-align: center;
+  transform: scaleY(1.25);
+  line-height: 1.5;
+}
+
 @-webkit-keyframes spincard {
   0% {
     transform: translateX(0) translateY(0) rotate(0deg);

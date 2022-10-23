@@ -1,5 +1,5 @@
 const socket = io();
-let $cards;
+let $cards, animationTimeout;
 socket.emit('joinPlayer', `Player Joined`);
 
 socket.on('playerJoined', ({ message, player, id }) => {
@@ -11,6 +11,14 @@ socket.on('playerJoined', ({ message, player, id }) => {
 socket.on('hand', cards => {
     $cards = JSON.parse(JSON.stringify(cards));
     renderHand(cards);
+});
+
+socket.on('cardPlayed', ({ message, error }) => {
+    document.querySelector('#message').innerHTML = message;
+    if (error) {
+        clearTimeout(animationTimeout);
+        document.querySelector('.playing')?.classList.remove('playing');
+    }
 });
 
 function renderHand(cards) {
@@ -80,7 +88,8 @@ function playCard(card, cardElem) {
     let playgroundPosition = document.querySelector('#playground .card-holder').getBoundingClientRect();
     cardElem.style.setProperty('--playing-x', `${playgroundPosition.left + (playgroundPosition.width / 2) - (cardPostion.width / 2) - cardPostion.left}px`);
     cardElem.style.setProperty('--playing-y', `${playgroundPosition.top - cardPostion.top}px`);
-    setTimeout(() => {
+    sessionStorage.setItem('playedCardIndex', [...cardElem.parentElement.children].indexOf(cardElem));
+    animationTimeout = setTimeout(() => {
         document.querySelector('#playground .card-holder').appendChild(cardElem);
         cardElem.classList.remove('playing');
     }, 1000);

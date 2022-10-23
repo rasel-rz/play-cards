@@ -27,7 +27,7 @@ io.on('connection', socket => {
         if (players.length <= PLAYER__NAMES.length) {
             let playerName = PLAYER__NAMES[players.length - 1];
             let message = `${playerName} joined with ID: ${socket.id}`;
-            io.emit('playerJoined', {
+            io.to(socket.id).emit('playerJoined', {
                 message,
                 player: playerName,
                 id: socket.id
@@ -36,6 +36,19 @@ io.on('connection', socket => {
             playerCards.push(cards);
             io.to(socket.id).emit('hand', cards);
         }
+    });
+
+    socket.on('playCard', card => {
+        if (players.length !== PLAYER__NAMES.length) {
+            let message = `Waiting for other players to join`;
+            io.emit('cardPlayed', { message, error: true });
+            return;
+        }
+        let player = players.find(player => player === socket.id);
+        let playerIndex = players.indexOf(player);
+        let nextPlayerIndex = (playerIndex + 1) % players.length;
+        let message = `${PLAYER__NAMES[playerIndex].toUpperCase()} played ${card.value} of ${card.suit}<br/>Now it's ${PLAYER__NAMES[nextPlayerIndex]}'s turn`;
+        io.emit('cardPlayed', { message, error: false });
     });
 
     socket.on('disconnect', () => {
