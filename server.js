@@ -11,79 +11,83 @@ const deck = require('./utils/deck');
 
 //Setting the static frontend
 app.use(express.static(path.join(__dirname, 'public')));
-const PLAYER__NAMES = ['Red', 'Green', 'Yellow', 'Blue'];
-let players = [];
-let playerCards = [];
-
+let $players = [
+    { name: "Red", id: undefined, cards: undefined },
+    { name: "Green", id: undefined, cards: undefined },
+    { name: "Orange", id: undefined, cards: undefined },
+    { name: "Blue", id: undefined, cards: undefined }
+];
 
 // Getting a new deck
 let myDeck = deck.getNewDeck();
 deck.shuffleDeck(myDeck);
 let currentTurn = 0;
+
+// Player ordering for visual purposes
 function getPlayerInOrders(playerName) {
-    let playerIndex = PLAYER__NAMES.indexOf(playerName);
+    let playerIndex = $players.findIndex(player => player.name === playerName);
     let playerOrder = [];
-    for (let i = playerIndex + 1; playerOrder.length < PLAYER__NAMES.length - 1; i++) {
-        playerOrder.push(PLAYER__NAMES[i % PLAYER__NAMES.length]);
+    for (let i = playerIndex + 1; playerOrder.length < $players.length - 1; i++) {
+        playerOrder.push($players[i % $players.length]);
     }
-    return playerOrder;
+    return playerOrder.map(player => player.name);
 }
 
 // Setting up socket.io
 io.on('connection', socket => {
     socket.on('joinPlayer', () => {
-        players.push(socket.id);
-        if (players.length <= PLAYER__NAMES.length) {
-            let playerName = PLAYER__NAMES[players.length - 1];
-            let message = `${playerName} joined with ID: ${socket.id}`;
+        if ($players.find(x => x.id === undefined)) {
+            $players.find(x => x.id === undefined).id = socket.id;
+            let player = $players.find(x => x.id === socket.id);
+            let message = `${player.name} joined with ID: ${socket.id}`;
             io.to(socket.id).emit('playerJoined', {
                 message,
-                player: playerName,
-                players: getPlayerInOrders(playerName),
+                player: player.name,
+                players: getPlayerInOrders(player.name),
                 id: socket.id
             });
-            let cards = deck.drawHand(myDeck, 13, playerName)
-            playerCards.push(cards);
-            io.to(socket.id).emit('hand', cards);
+            player.cards = deck.drawHand(myDeck, 13, player.name)
+            io.to(socket.id).emit('hand', player.cards);
         } else {
             io.to(socket.id).emit('outOfRoom', 'Sorry, the room is full!!');
-            players.pop();
         }
     });
 
     socket.on('playCard', card => {
-        let player = players.find(player => player === socket.id);
-        let playerIndex = players.indexOf(player);
-        if (players.length !== PLAYER__NAMES.length) {
+        let player = $players.find(x => x.id === socket.id);
+        let playerIndex = $players.indexOf(player);
+        if ($players.find(x => x.id === undefined)) {
             let message = `Waiting for other players to join`;
             io.emit('cardPlayed', { message, error: true });
             return;
         }
-        if (currentTurn !== players.indexOf(socket.id)) {
-            let message = `It's not your turn, @${PLAYER__NAMES[playerIndex]}!!`;
+        if (currentTurn !== $players.indexOf(player)) {
+            let message = `It's not your turn, @${player.name}!!`;
             io.to(socket.id).emit('cardPlayed', { message, error: true });
             return;
         }
-        let nextPlayerIndex = (playerIndex + 1) % players.length;
-        let message = `${PLAYER__NAMES[playerIndex].toUpperCase()} played ${card.value} of ${card.suit}<br/>Now it's ${PLAYER__NAMES[nextPlayerIndex]}'s turn`;
-        io.emit('cardPlayed', { message, error: false, cardholder: PLAYER__NAMES[currentTurn], card });
-        currentTurn = (currentTurn + 1) % players.length;
+        let nextPlayerIndex = (playerIndex + 1) % $players.length;
+        let nextPlayer = $players[nextPlayerIndex];
+        let message = `${player.name.toUpperCase()} played ${card.value} of ${card.suit}<br/>Now it's ${nextPlayer.name}'s turn`;
+        io.emit('cardPlayed', { message, error: false, cardholder: player.name, card });
+        currentTurn = (currentTurn + 1) % $players.length;
     });
 
     socket.on('leadComplete', () => {
-        let player = players.find(player => player === socket.id);
-        let playerIndex = players.indexOf(player);
-        socket.broadcast.emit('leadCompleted', { message: `${PLAYER__NAMES[playerIndex]} collected the lead` });
+        let player = $players.find(x => x.id === socket.id);
+        socket.broadcast.emit('leadCompleted', { message: `${player.name} collected the lead` });
         io.to(socket.id).emit('leadCompleted', { message: `You collected the lead` });
     });
 
     socket.on('disconnect', () => {
-        let playerIndex = players.indexOf(socket.id);
-        myDeck = myDeck.concat(playerCards[playerIndex]).filter(x => x);
-        let player = PLAYER__NAMES[playerIndex];
-        players = players.filter(player => player !== socket.id);
-        io.emit('playerLeft', `${player} left the game`);
-        console.log(`${player} left the game`);
+        let player = $players.find(x => x.id === socket.id);
+        if (player) {
+            myDeck = myDeck.concat(player.cards).filter(x => x);
+            player.cards = undefined;
+            player.id = undefined;
+        }
+        io.emit('playerLeft', `${player?.name || 'Guest'} left the game`);
+        console.log(`${player?.name || 'Guest'} left the game`);
     });
 });
 
