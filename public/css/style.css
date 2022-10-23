@@ -1,3 +1,4 @@
+@charset "UTF-8";
 * {
   box-sizing: border-box;
   margin: 0;
@@ -42,7 +43,7 @@ h2 {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  padding: clamp(1rem, 1.5vw, 1.5vw);
+  padding: max(1rem, 1.5vw);
   height: -webkit-max-content;
   height: -moz-max-content;
   height: max-content;
@@ -76,11 +77,21 @@ h2 {
   border: 1px solid;
   border-color: #ffffff;
   border-radius: 16px;
-  margin: 4rem auto;
+  margin: 4vw auto;
   position: relative;
-  padding: clamp(16px, 2rem, 2rem);
+  padding: max(1rem, 2vw);
   position: relative;
   --size: clamp(72px, 9vw, 9vw);
+  pointer-events: none;
+  cursor: default;
+}
+#playground.pulse {
+  pointer-events: all;
+  cursor: pointer;
+}
+#playground.pulse .card-holder .card {
+  -webkit-animation: pulse 1s ease-in-out infinite;
+          animation: pulse 1s ease-in-out infinite;
 }
 #playground::after {
   content: "";
@@ -102,32 +113,73 @@ h2 {
 }
 #playground.appear::after {
   opacity: 0;
+  z-index: -1;
+}
+#playground.appear .card-holder::after {
+  display: block;
 }
 #playground .card-holder {
-  min-height: 20px;
-  min-width: 20px;
+  min-height: clamp(88px, 10vw, 10vw);
+  min-width: clamp(50px, 6vw, 6vw);
   position: absolute;
+  display: flex;
+  justify-content: center;
+}
+#playground .card-holder:not(:first-child) .card {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+#playground .card-holder:not(:first-child) .card.fade-in {
+  opacity: 1;
 }
 #playground .card-holder .card:not(:last-child) {
   display: none;
 }
+#playground .card-holder::after {
+  position: absolute;
+  font-size: 4vw;
+  display: none;
+  white-space: nowrap;
+}
 #playground .card-holder:nth-child(1) {
-  top: clamp(16px, 2rem, 2rem);
+  top: max(1rem, 4vw);
   left: 50%;
   transform: translateX(-50%);
+  z-index: 4;
 }
 #playground .card-holder:nth-child(2) {
-  right: clamp(16px, 2rem, 2rem);
+  right: max(1rem, 4vw);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+}
+#playground .card-holder:nth-child(2)::after {
+  content: "←" " " attr(data-player);
+  left: calc(100% + 5vw);
   top: 50%;
   transform: translateY(-50%);
 }
 #playground .card-holder:nth-child(3) {
-  bottom: clamp(16px, 2rem, 2rem);
+  bottom: max(1rem, 4vw);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+#playground .card-holder:nth-child(3)::after {
+  content: "↑" " " attr(data-player);
+  bottom: -10vw;
   left: 50%;
   transform: translateX(-50%);
 }
 #playground .card-holder:nth-child(4) {
-  left: clamp(16px, 2rem, 2rem);
+  left: max(1rem, 4vw);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+#playground .card-holder:nth-child(4)::after {
+  content: attr(data-player) " " "→";
+  right: calc(100% + 5vw);
   top: 50%;
   transform: translateY(-50%);
 }
@@ -137,6 +189,7 @@ h2 {
   text-align: center;
   transform: scaleY(1.25);
   line-height: 1.5;
+  margin-top: 10vw;
 }
 
 @-webkit-keyframes spincard {
@@ -170,5 +223,27 @@ h2 {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+@-webkit-keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
   }
 }

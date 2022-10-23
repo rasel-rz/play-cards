@@ -19,6 +19,15 @@ let playerCards = [];
 // Getting a new deck
 let myDeck = deck.getNewDeck();
 deck.shuffleDeck(myDeck);
+let currentTurn = 0;
+function getPlayerInOrders(playerName) {
+    let playerIndex = PLAYER__NAMES.indexOf(playerName);
+    let playerOrder = [];
+    for (let i = playerIndex + 1; playerOrder.length < PLAYER__NAMES.length - 1; i++) {
+        playerOrder.push(PLAYER__NAMES[i % PLAYER__NAMES.length]);
+    }
+    return playerOrder;
+}
 
 // Setting up socket.io
 io.on('connection', socket => {
@@ -30,25 +39,42 @@ io.on('connection', socket => {
             io.to(socket.id).emit('playerJoined', {
                 message,
                 player: playerName,
+                players: getPlayerInOrders(playerName),
                 id: socket.id
             });
             let cards = deck.drawHand(myDeck, 13, playerName)
             playerCards.push(cards);
             io.to(socket.id).emit('hand', cards);
+        } else {
+            io.to(socket.id).emit('outOfRoom', 'Sorry, the room is full!!');
+            players.pop();
         }
     });
 
     socket.on('playCard', card => {
+        let player = players.find(player => player === socket.id);
+        let playerIndex = players.indexOf(player);
         if (players.length !== PLAYER__NAMES.length) {
             let message = `Waiting for other players to join`;
             io.emit('cardPlayed', { message, error: true });
             return;
         }
-        let player = players.find(player => player === socket.id);
-        let playerIndex = players.indexOf(player);
+        if (currentTurn !== players.indexOf(socket.id)) {
+            let message = `It's not your turn, @${PLAYER__NAMES[playerIndex]}!!`;
+            io.to(socket.id).emit('cardPlayed', { message, error: true });
+            return;
+        }
         let nextPlayerIndex = (playerIndex + 1) % players.length;
         let message = `${PLAYER__NAMES[playerIndex].toUpperCase()} played ${card.value} of ${card.suit}<br/>Now it's ${PLAYER__NAMES[nextPlayerIndex]}'s turn`;
-        io.emit('cardPlayed', { message, error: false });
+        io.emit('cardPlayed', { message, error: false, cardholder: PLAYER__NAMES[currentTurn], card });
+        currentTurn = (currentTurn + 1) % players.length;
+    });
+
+    socket.on('leadComplete', () => {
+        let player = players.find(player => player === socket.id);
+        let playerIndex = players.indexOf(player);
+        socket.broadcast.emit('leadCompleted', { message: `${PLAYER__NAMES[playerIndex]} collected the lead` });
+        io.to(socket.id).emit('leadCompleted', { message: `You collected the lead` });
     });
 
     socket.on('disconnect', () => {

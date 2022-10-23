@@ -2,9 +2,13 @@ const socket = io();
 let $cards, animationTimeout;
 socket.emit('joinPlayer', `Player Joined`);
 
-socket.on('playerJoined', ({ message, player, id }) => {
-    console.log(message);
+socket.on('playerJoined', ({ message, player, players, id }) => {
     document.querySelector('#player').textContent = `You are playing as ${player.toUpperCase()}`;
+    document.querySelectorAll('#playground .card-holder:not(:first-child)').forEach((elem, index) => {
+        elem.style.setProperty('--player', players[index]);
+        elem.setAttribute('aria-label', `Player ${players[index]}`);
+        elem.setAttribute('data-player', players[index]);
+    });
 });
 
 
@@ -13,13 +17,40 @@ socket.on('hand', cards => {
     renderHand(cards);
 });
 
-socket.on('cardPlayed', ({ message, error }) => {
-    document.querySelector('#message').innerHTML = message;
+socket.on('cardPlayed', ({ message, error, cardholder, card }) => {
+    updateMessage(message);
     if (error) {
         clearTimeout(animationTimeout);
         document.querySelector('.playing')?.classList.remove('playing');
+        return;
     }
+    if (cardholder) {
+        let cardHolderElem = document.querySelector(`#playground .card-holder[data-player="${cardholder}" i]`);
+        if (cardHolderElem) {
+            cardHolderElem.appendChild(createCard(card));
+            setTimeout(() => {
+                cardHolderElem.querySelector('.card:last-child').classList.add('fade-in');
+            }, 0);
+        }
+    }
+    checkLeadProgress();
 });
+
+socket.on('leadCompleted', ({ message }) => {
+    clearPlayground();
+    updateMessage(message);
+});
+
+socket.on('outOfRoom', message => {
+    updateMessage(message);
+    document.querySelector('#playground')?.remove();
+    document.querySelector('#cards').innerHTML = '';
+    document.querySelector('#player').textContent = '';
+});
+
+function updateMessage(message) {
+    document.querySelector('#message').innerHTML = message;
+}
 
 function renderHand(cards) {
     let cardContainer = document.querySelector('#cards');
@@ -83,6 +114,7 @@ function createCard(card) {
 }
 
 function playCard(card, cardElem) {
+    if (document.querySelector('#playground.pulse')) return;
     cardElem.classList.add('playing');
     let cardPostion = cardElem.getBoundingClientRect();
     let playgroundPosition = document.querySelector('#playground .card-holder').getBoundingClientRect();
@@ -92,11 +124,33 @@ function playCard(card, cardElem) {
     animationTimeout = setTimeout(() => {
         document.querySelector('#playground .card-holder').appendChild(cardElem);
         cardElem.classList.remove('playing');
+        checkLeadProgress();
+        cardElem.removeEventListener('click', playCard.bind(this, card, cardElem));
     }, 1000);
     socket.emit('playCard', card);
 }
 
+function checkLeadProgress() {
+    if (document.querySelectorAll('#playground .card-holder .card').length == 4) {
+        document.querySelector('#playground').classList.add('pulse');
+    } else {
+        document.querySelector('#playground').classList.remove('pulse');
+    }
+}
+
+document.querySelector('#playground').addEventListener('click', () => {
+    if (document.querySelector('#playground').classList.contains('pulse')) {
+        socket.emit('leadComplete');
+        clearPlayground();
+    }
+});
+
+function clearPlayground() {
+    document.querySelectorAll('#playground .card-holder .card')
+        .forEach(card => card.remove());
+    checkLeadProgress();
+}
+
 window.onbeforeunload = function () {
-    console.log('Leaving');
     socket.disconnect();
 };
