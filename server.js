@@ -19,8 +19,7 @@ let $players = [
 ];
 
 // Getting a new deck
-let myDeck = deck.getNewDeck();
-deck.shuffleDeck(myDeck);
+let myDeck = [];
 let currentTurn = 0;
 
 // Player ordering for visual purposes
@@ -39,17 +38,30 @@ io.on('connection', socket => {
         if ($players.find(x => x.id === undefined)) {
             $players.find(x => x.id === undefined).id = socket.id;
             let player = $players.find(x => x.id === socket.id);
-            let message = `${player.name} joined with ID: ${socket.id}`;
-            io.to(socket.id).emit('playerJoined', {
-                message,
+            let message = `${player.name} joined the game`;
+            io.to(socket.id).emit('inGame', {
                 player: player.name,
-                players: getPlayerInOrders(player.name),
-                id: socket.id
+                players: getPlayerInOrders(player.name)
             });
-            player.cards = deck.drawHand(myDeck, 13, player.name)
-            io.to(socket.id).emit('hand', player.cards);
+            io.emit('playerJoined', {
+                message,
+                count: $players.filter(x => x.id !== undefined).length,
+            });
         } else {
             io.to(socket.id).emit('outOfRoom', 'Sorry, the room is full!!');
+            return;
+        }
+        if ($players.every(x => x.id)) {
+            myDeck = deck.getNewDeck();
+            deck.shuffleDeck(myDeck);
+            currentTurn = 0;
+            $players.forEach(player => {
+                player.cards = deck.drawHand(myDeck, 13, player.name);
+                io.to(player.id).emit('hand', {
+                    cards: player.cards,
+                    message: `---- Game started ----<br/>Now it's Red's turn`
+                });
+            });
         }
     });
 
@@ -81,13 +93,15 @@ io.on('connection', socket => {
 
     socket.on('disconnect', () => {
         let player = $players.find(x => x.id === socket.id);
+        console.log(`${player?.name || 'Guest'} left the game`);
         if (player) {
-            myDeck = myDeck.concat(player.cards).filter(x => x);
             player.cards = undefined;
             player.id = undefined;
+            io.emit('playerLeft', {
+                message: `${player.name} left, waiting for another player to join`,
+                count: $players.filter(x => x.id !== undefined).length
+            });
         }
-        io.emit('playerLeft', `${player?.name || 'Guest'} left the game`);
-        console.log(`${player?.name || 'Guest'} left the game`);
     });
 });
 

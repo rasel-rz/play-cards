@@ -2,7 +2,7 @@ const socket = io();
 let $cards, animationTimeout;
 socket.emit('joinPlayer', `Player Joined`);
 
-socket.on('playerJoined', ({ message, player, players, id }) => {
+socket.on('inGame', ({ player, players }) => {
     document.querySelector('#player').textContent = `You are playing as ${player.toUpperCase()}`;
     document.querySelectorAll('#playground .card-holder:not(:first-child)').forEach((elem, index) => {
         elem.style.setProperty('--player', players[index]);
@@ -11,10 +11,10 @@ socket.on('playerJoined', ({ message, player, players, id }) => {
     });
 });
 
-
-socket.on('hand', cards => {
+socket.on('hand', ({ cards, message }) => {
     $cards = JSON.parse(JSON.stringify(cards));
     renderHand(cards);
+    updateMessage(message);
 });
 
 socket.on('cardPlayed', ({ message, error, cardholder, card }) => {
@@ -48,8 +48,22 @@ socket.on('outOfRoom', message => {
     document.querySelector('#player').textContent = '';
 });
 
+socket.on('playerLeft', updatePlayerStatus);
+socket.on('playerJoined', updatePlayerStatus);
+
+function updatePlayerStatus({ message, count }) {
+    updateCount(count);
+    updateMessage(message);
+    document.querySelectorAll('.card').forEach(card => card.remove());
+    document.querySelector('#playground').classList.remove('appear');
+}
+
 function updateMessage(message) {
     document.querySelector('#message').innerHTML = message;
+}
+
+function updateCount(count) {
+    document.querySelector('#count span').textContent = count;
 }
 
 function renderHand(cards) {
