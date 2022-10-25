@@ -1,12 +1,19 @@
-@charset "UTF-8";
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+:root {
+  --clr-black: #2a2a2a;
+  --clr-gray: #666666;
+  --clr-white: #fafafa;
+}
+
 body {
   font-family: monospace;
+  background-color: var(--clr-black);
+  color: var(--clr-white);
 }
 
 h1,
@@ -51,10 +58,11 @@ h2 {
   border: 1px solid var(--card-color);
   color: var(--card-color);
   opacity: 0.8;
-  background-color: #fff;
+  background-color: var(--clr-white);
   border-radius: 8px;
   transform: scale(1) rotate(0deg);
   transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+  box-shadow: 1px 1px 4px 0px currentColor;
 }
 .card [value] {
   font-size: clamp(32px, 4vw, 4vw);
@@ -73,15 +81,13 @@ h2 {
 #playground {
   height: clamp(248px, 30vw, 30vw);
   width: clamp(168px, 21vw, 21vw);
-  background-color: #ffffff;
-  border: 1px solid;
-  border-color: #ffffff;
   border-radius: 16px;
-  margin: 4vw auto;
+  margin: max(2rem, 4vw) auto;
   position: relative;
   padding: max(1rem, 2vw);
   position: relative;
-  --size: clamp(72px, 9vw, 9vw);
+  --spinner-size: clamp(72px, 9vw, 9vw);
+  --spinner-stroke: 16px;
   pointer-events: none;
   cursor: default;
 }
@@ -95,28 +101,29 @@ h2 {
 }
 #playground::after {
   content: "";
-  border: 16px solid #f6f6f6;
-  border-top: 16px solid #d9d9d9;
+  border: var(--spinner-stroke) solid #f6f6f6;
+  border-top: var(--spinner-stroke) solid #d9d9d9;
   border-radius: 50%;
-  width: var(--size);
-  height: var(--size);
+  width: var(--spinner-size);
+  height: var(--spinner-size);
   -webkit-animation: spin 2s linear infinite;
           animation: spin 2s linear infinite;
   display: inline-block;
   position: absolute;
-  top: calc(50% - var(--size) / 2);
-  left: calc(50% - var(--size) / 2);
+  top: calc(50% - var(--spinner-stroke) - var(--spinner-size) / 2);
+  left: calc(50% - var(--spinner-stroke) - var(--spinner-size) / 2);
 }
 #playground.appear {
-  background-color: #dfdfdf;
-  border-color: #000000;
+  background-color: var(--clr-gray);
+  box-shadow: 0 0 8px 8px var(--clr-gray);
 }
 #playground.appear::after {
   opacity: 0;
   z-index: -1;
+  display: none;
 }
-#playground.appear .card-holder::after {
-  display: block;
+#playground.appear .card-holder {
+  opacity: 1;
 }
 #playground .card-holder {
   min-height: clamp(88px, 10vw, 10vw);
@@ -124,6 +131,7 @@ h2 {
   position: absolute;
   display: flex;
   justify-content: center;
+  opacity: 0;
 }
 #playground .card-holder:not(:first-child) .card {
   opacity: 0;
@@ -132,64 +140,60 @@ h2 {
 #playground .card-holder:not(:first-child) .card.fade-in {
   opacity: 1;
 }
+#playground .card-holder .person {
+  --position-person: calc((min(-2rem, -4vw)) - var(--height));
+  border-bottom: 3px solid var(--player);
+}
 #playground .card-holder .card:not(:last-child) {
   display: none;
 }
-#playground .card-holder::after {
-  position: absolute;
-  font-size: 4vw;
-  display: none;
-  white-space: nowrap;
-}
 #playground .card-holder:nth-child(1) {
-  top: max(1rem, 4vw);
+  top: max(0.75rem, 2vw);
   left: 50%;
   transform: translateX(-50%);
   z-index: 4;
 }
 #playground .card-holder:nth-child(2) {
-  right: max(1rem, 4vw);
+  right: max(0.75rem, 2vw);
   top: 50%;
   transform: translateY(-50%);
   z-index: 3;
 }
-#playground .card-holder:nth-child(2)::after {
-  content: "←" " " attr(data-player);
-  left: calc(100% + 5vw);
+#playground .card-holder:nth-child(2) .person {
+  position: absolute;
+  right: var(--position-person);
   top: 50%;
   transform: translateY(-50%);
 }
 #playground .card-holder:nth-child(3) {
-  bottom: max(1rem, 4vw);
+  bottom: max(0.75rem, 2vw);
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
 }
-#playground .card-holder:nth-child(3)::after {
-  content: "↑" " " attr(data-player);
-  bottom: -10vw;
-  left: 50%;
-  transform: translateX(-50%);
+#playground .card-holder:nth-child(3) .person {
+  position: absolute;
+  bottom: var(--position-person);
 }
 #playground .card-holder:nth-child(4) {
-  left: max(1rem, 4vw);
+  left: max(0.75rem, 2vw);
   top: 50%;
   transform: translateY(-50%);
   z-index: 1;
 }
-#playground .card-holder:nth-child(4)::after {
-  content: attr(data-player) " " "→";
-  right: calc(100% + 5vw);
+#playground .card-holder:nth-child(4) .person {
+  position: absolute;
+  left: var(--position-person);
   top: 50%;
   transform: translateY(-50%);
 }
 
 #message {
-  font-size: 2.5vw;
+  font-size: max(14px, 2.5vw);
   text-align: center;
   transform: scaleY(1.25);
   line-height: 1.5;
-  margin-top: 10vw;
+  margin-top: max(4rem, 10vw);
 }
 
 @-webkit-keyframes spincard {
@@ -246,4 +250,36 @@ h2 {
   100% {
     transform: scale(1);
   }
+}
+.person {
+  --height: max(32px, 4.5vw);
+  --width: calc(var(--height) * 3 / 4);
+  --border-width: calc(var(--height) * 1 / 10);
+  position: relative;
+  height: var(--height);
+  width: var(--width);
+}
+.person:after {
+  content: "";
+  display: block;
+  position: absolute;
+  box-sizing: border-box;
+  top: calc(var(--height) * 18 / 40);
+  height: calc(var(--height) * 15 / 40);
+  width: var(--width);
+  border: 0px solid lightgrey;
+  border-radius: calc(var(--width) * 3 / 10) calc(var(--width) * 3 / 10) 0 0;
+  border-width: var(--border-width) var(--border-width) 0px var(--border-width);
+}
+.person:before {
+  content: "";
+  display: block;
+  box-sizing: border-box;
+  position: absolute;
+  top: 0;
+  left: calc(var(--height) * 1 / 8);
+  height: calc(var(--height) * 1 / 2);
+  width: calc(var(--height) * 1 / 2);
+  border-radius: 50%;
+  border: var(--border-width) solid lightgrey;
 }

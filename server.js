@@ -15,10 +15,9 @@ let $players = [
     { name: "Red", id: undefined, cards: undefined },
     { name: "Green", id: undefined, cards: undefined },
     { name: "Orange", id: undefined, cards: undefined },
-    { name: "Blue", id: undefined, cards: undefined }
+    { name: "Cyan", id: undefined, cards: undefined }
 ];
 
-// Getting a new deck
 let myDeck = [];
 let currentTurn = 0;
 
@@ -87,6 +86,8 @@ io.on('connection', socket => {
 
     socket.on('leadComplete', () => {
         let player = $players.find(x => x.id === socket.id);
+        let playerIndex = $players.indexOf(player);
+        currentTurn = playerIndex;
         socket.broadcast.emit('leadCompleted', { message: `${player.name} collected the lead` });
         io.to(socket.id).emit('leadCompleted', { message: `You collected the lead` });
     });
